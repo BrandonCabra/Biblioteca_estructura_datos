@@ -1,55 +1,79 @@
-# Biblioteca_estructura_datos
+# Sistema de Gestión de Biblioteca
 
-# 📚 Sistema de Gestión de Biblioteca - Estructuras de Datos
+API REST para gestión de biblioteca desarrollada con FastAPI, SQLite y una estructura modular por capas.
 
-Este proyecto es un prototipo funcional de un Sistema de Gestión de Biblioteca desarrollado en Python. Su objetivo principal es demostrar la aplicación práctica de **Estructuras de Datos Lineales** (Listas, Pilas y Colas) y los principios de la **Programación Orientada a Objetos (POO)**
+## Características
 
-## 🚀 Características Principales
+- Registro, consulta y eliminación de libros.
+- Registro y consulta de usuarios.
+- Gestión de préstamos, devoluciones y reservas.
+- Historial y métricas del sistema.
+- Frontend estático servido desde FastAPI.
+- Documentación automática con Swagger y ReDoc.
 
-El sistema incluye una interfaz gráfica de usuario (GUI) amigable que permite realizar las siguientes operaciones:
-
-* **Gestión de Catálogo y Usuarios:** Registro de nuevos libros (ISBN, título, autor) y usuarios (ID, nombre).
-* **Consultas:** Listado completo y búsqueda específica de libros y usuarios registrados.
-* **Préstamos y Reservas (Uso de Colas):** Permite prestar libros. Si un libro no está disponible, el usuario ingresa a una lista de espera justa bajo el principio FIFO (First In, First Out).
-* **Devoluciones Automáticas:** Al devolver un libro, el sistema verifica la lista de espera y lo reasigna automáticamente al siguiente usuario en la cola.
-* **Historial de Devoluciones (Uso de Pilas):** Registra los libros devueltos, permitiendo consultar la última devolución realizada bajo el principio LIFO (Last In, First Out).
-
-## 🧠 Estructuras de Datos Implementadas
-
-El núcleo de este sistema se basa en la correcta parametrización de los datos:
-
-1.  **Listas (Arrays Dinámicos):** Utilizadas para almacenar el catálogo general de libros y el registro de usuarios. Permiten una iteración rápida y búsquedas lineales eficientes por atributos (ID o ISBN).
-2.  **Colas (`collections.deque`):** Implementadas dentro de cada objeto `Libro` para gestionar la lista de espera. Garantizan una complejidad de O(1) al retirar el primer elemento, respetando el modelo FIFO.
-3.  **Pilas (Stacks):** Implementadas mediante listas restringidas (uso exclusivo de `append` y acceso al índice `[-1]`) para gestionar el historial de las devoluciones más recientes (modelo LIFO).
-
-## 📂 Estructura del Proyecto
-
-El proyecto está modularizado separando la lógica de los datos de la interfaz de usuario:
+## Estructura del proyecto
 
 ```text
-gestion_biblioteca/
-├── models/                   # Modelo (Cerebro y Estructuras de Datos)
-│   ├── libro.py              # Clase Libro (Contiene la Cola de espera)
-│   ├── usuario.py            # Clase Usuario
-│   └── biblioteca.py         # Lógica central (Listas generales y Pila de historial)
-├── main_tkinter.py           # Vista/Controlador (Interfaz gráfica y ejecución)
-└── README.md                 # Documentación del proyecto
+Biblioteca_estructura_datos/
+├── app/
+│   ├── controllers/
+│   ├── database/
+│   ├── models/
+│   ├── repositories/
+│   ├── schemas/
+│   └── services/
+├── static/
+├── templates/
+├── biblioteca.db
+├── main.py
+├── requirements.txt
+└── README.md
+```
 
-## 🛠️ Requisitos e Instalación
-Este proyecto fue desarrollado utilizando herramientas nativas de Python, por lo que no requiere la instalación de librerías externas de terceros.
+## Requisitos
 
-Python: Versión 3.x o superior.
+- Python 3.12 o superior.
+- Dependencias listadas en `requirements.txt`.
 
-Tkinter: Librería estándar de Python para interfaces gráficas (normalmente preinstalada con Python).
+## Instalación
 
-## ▶️ Cómo ejecutar el proyecto
-Clona este repositorio o descarga los archivos en tu máquina local.
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-Abre una terminal y navega hasta el directorio raíz del proyecto.
+## Ejecución
 
-Ejecuta el archivo principal con el siguiente comando:
+Puedes iniciar el servidor de cualquiera de estas formas:
 
-Bash
-python main_tkinter.py
+```bash
+python main.py
+```
 
-📝Proyecto académico para el curso de Estructura de Datos.
+```bash
+uvicorn main:app --reload
+```
+
+Luego abre:
+
+- `http://127.0.0.1:8000/`
+- `http://127.0.0.1:8000/docs`
+- `http://127.0.0.1:8000/redoc`
+
+## Endpoints principales
+
+- `GET /api/libros`
+- `POST /api/libros`
+- `GET /api/usuarios`
+- `POST /api/usuarios`
+- `GET /api/prestamos`
+- `POST /api/prestamos`
+- `GET /api/reservas`
+- `POST /api/reservas`
+- `GET /api/historial`
+- `GET /api/metricas`
+
+## Nota
+
+La base de datos SQLite se inicializa al arrancar la aplicación desde `main.py`.

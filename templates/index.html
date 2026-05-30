@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Gestión de Biblioteca</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1117;--surface:#181c27;--card:#1e2335;--border:#2a3050;
+  --accent:#7c6af7;--a2:#4ecdc4;--a3:#f7c56a;--a4:#f76a8a;
+  --text:#e8eaf2;--muted:#7a82a0;--r:12px;--mono:'DM Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* SIDEBAR */
+aside{width:230px;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:10}
+.logo{padding:20px 18px;border-bottom:1px solid var(--border)}
+.logo small{font-family:var(--mono);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:2px}
+.logo h1{font-family:'DM Serif Display',serif;font-size:18px;line-height:1.25;margin-top:4px}
+.sidebar-stats{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.sp{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 4px;text-align:center}
+.sp b{display:block;font-family:var(--mono);font-size:15px;color:var(--accent)}
+.sp small{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-g{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;padding:10px 18px 4px;font-family:var(--mono)}
+.nb{display:flex;align-items:center;gap:8px;width:100%;padding:8px 18px;background:none;border:none;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left;transition:all .15s;position:relative}
+.nb:hover{color:var(--text);background:rgba(124,106,247,.08)}
+.nb.on{color:var(--accent);background:rgba(124,106,247,.12)}
+.nb.on::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:var(--accent);border-radius:0 3px 3px 0}
+.ni{font-size:14px;width:16px;text-align:center}
+.nbadge{margin-left:auto;background:var(--a4);color:#fff;font-size:9px;font-family:var(--mono);padding:1px 6px;border-radius:20px}
+
+/* MAIN */
+main{margin-left:230px;flex:1;padding:24px 28px;max-width:calc(100vw - 230px)}
+.page{display:none}.page.on{display:block}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px}
+.ph h2{font-family:'DM Serif Display',serif;font-size:26px;line-height:1}
+.ph p{font-size:11px;color:var(--muted);margin-top:3px}
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:10px;font-family:var(--mono)}
+.tag-m{background:rgba(78,205,196,.1);border:1px solid rgba(78,205,196,.25);color:var(--a2)}
+.tag-c{background:rgba(124,106,247,.1);border:1px solid rgba(124,106,247,.25);color:var(--accent)}
+.tag-v{background:rgba(247,197,106,.1);border:1px solid rgba(247,197,106,.25);color:var(--a3)}
+
+/* CARDS */
+.grid{display:grid;gap:12px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.ct{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.dot.t{background:var(--a2)}.dot.g{background:var(--a3)}.dot.p{background:var(--a4)}
+
+/* METRICS */
+.mc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
+.mc::after{content:attr(data-i);position:absolute;right:12px;top:8px;font-size:26px;opacity:.1}
+.mv{font-family:'DM Serif Display',serif;font-size:30px;line-height:1;margin-bottom:2px}
+.ml{font-size:11px;color:var(--muted)}.ms{font-size:10px;color:var(--muted);margin-top:5px;font-family:var(--mono)}
+
+/* FORMS */
+.fr{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.fi{display:flex;flex-direction:column;gap:4px;flex:1;min-width:100px}
+.fl{font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px}
+input,select{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;width:100%;transition:border .15s}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+input::placeholder{color:var(--muted)}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:7px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.bp{background:var(--accent);color:#fff}.bp:hover{background:#6a5ae0}
+.bt{background:var(--a2);color:#0f1117}.bt:hover{background:#3db8af}
+.bg2{background:var(--a3);color:#0f1117}.bg2:hover{background:#e0b05e}
+.bd{background:var(--a4);color:#fff}.bd:hover{background:#d9506b}
+.bgh{background:transparent;border:1px solid var(--border);color:var(--muted)}.bgh:hover{border-color:var(--accent);color:var(--accent)}
+.sm{padding:4px 9px;font-size:11px;border-radius:5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* TABLE */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{text-align:left;padding:8px 10px;color:var(--muted);font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid var(--border);font-weight:500}
+tbody tr{border-bottom:1px solid rgba(42,48,80,.4);transition:background .12s}
+tbody tr:hover{background:rgba(124,106,247,.05)}
+tbody td{padding:9px 10px;vertical-align:middle}
+.mc2{font-family:var(--mono);font-size:10px;color:var(--muted)}
+
+/* BADGES */
+.b{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:500}
+.bok{background:rgba(78,205,196,.15);color:var(--a2);border:1px solid rgba(78,205,196,.3)}
+.bwarn{background:rgba(247,197,106,.15);color:var(--a3);border:1px solid rgba(247,197,106,.3)}
+.berr{background:rgba(247,106,138,.15);color:var(--a4);border:1px solid rgba(247,106,138,.3)}
+.bpu{background:rgba(124,106,247,.15);color:var(--accent);border:1px solid rgba(124,106,247,.3)}
+
+/* HIST ITEMS */
+.hi{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid rgba(42,48,80,.4);font-size:12px}
+.hi:last-child{border-bottom:none}
+.hic{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.hic.pr{background:rgba(124,106,247,.2)}.hic.dv{background:rgba(78,205,196,.2)}
+.hm{flex:1}.hm strong{display:block;font-size:12px;color:var(--text)}.hm small{color:var(--muted);font-size:10px;font-family:var(--mono)}
+.ht{color:var(--muted);font-size:10px;font-family:var(--mono)}
+
+/* QUEUE */
+.qi{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface);border-radius:6px;margin-bottom:5px;font-size:12px;border:1px solid var(--border)}
+.qn{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);flex-shrink:0}
+
+/* STRUCT VIZ */
+.sv{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px;font-family:var(--mono);font-size:10px;line-height:2;min-height:44px;overflow-x:auto}
+.sn{display:inline-block;background:var(--card);border:1px solid var(--accent);border-radius:4px;padding:2px 8px;font-size:9px;color:var(--accent);margin:1px}
+.sn.tp{border-color:var(--a3);color:var(--a3)}.sn.fr2{border-color:var(--a2);color:var(--a2)}
+.sa{color:var(--muted)}.nl{color:var(--muted);font-size:10px}
+
+/* EMPTY */
+.empty{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+.empty span{font-size:24px;display:block;margin-bottom:6px}
+
+/* LOADER */
+.loader{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:11px 15px;font-size:12px;max-width:300px;z-index:1000;display:none;box-shadow:0 6px 28px rgba(0,0,0,.5);animation:su .22s ease}
+@keyframes su{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+#toast.ok{border-left:3px solid var(--a2)}#toast.err{border-left:3px solid var(--a4)}#toast.info{border-left:3px solid var(--accent)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="logo">
+    <small>Estructura de Datos</small>
+    <h1>Biblioteca<br>Digital</h1>
+  </div>
+  <div class="sidebar-stats">
+    <div class="sp"><b id="sl">0</b><small>Libros</small></div>
+    <div class="sp"><b id="su">0</b><small>Users</small></div>
+    <div class="sp"><b id="sp2">0</b><small>Prest.</small></div>
+  </div>
+  <nav>
+    <div class="nav-g">Menú</div>
+    <button class="nb on" onclick="go('dashboard')"><span class="ni">◈</span>Dashboard</button>
+    <button class="nb" onclick="go('libros')"><span class="ni">▤</span>Catálogo</button>
+    <button class="nb" onclick="go('usuarios')"><span class="ni">◎</span>Usuarios</button>
+    <button class="nb" onclick="go('prestamos')"><span class="ni">⇄</span>Préstamos</button>
+    <button class="nb" onclick="go('reservas')"><span class="ni">◷</span>Reservas</button>
+    <button class="nb" onclick="go('historial')"><span class="ni">↑</span>Historial<span class="nbadge" id="hcnt">0</span></button>
+    <div class="nav-g" style="margin-top:6px">Sistema</div>
+    <button class="nb" onclick="go('estructuras')"><span class="ni">⬡</span>Estructuras</button>
+    <button class="nb" onclick="window.open('/docs','_blank')"><span class="ni">⊞</span>API Docs ↗</button>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page on">
+  <div class="ph"><div><h2>Dashboard</h2><p>Sistema de Gestión de Biblioteca · API REST + SQLite</p></div></div>
+  <div class="grid g3" style="margin-bottom:14px">
+    <div class="mc" data-i="📚" style="border-top:3px solid var(--accent)"><div class="mv" style="color:var(--accent)" id="m-l">—</div><div class="ml">Libros en catálogo</div><div class="ms" id="m-d">—</div></div>
+    <div class="mc" data-i="👤" style="border-top:3px solid var(--a2)"><div class="mv" style="color:var(--a2)" id="m-u">—</div><div class="ml">Usuarios registrados</div><div class="ms" id="m-a">—</div></div>
+    <div class="mc" data-i="🔄" style="border-top:3px solid var(--a3)"><div class="mv" style="color:var(--a3)" id="m-p">—</div><div class="ml">Préstamos activos</div><div class="ms" id="m-r">—</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="ct"><span class="dot"></span>Últimas transacciones</div><div id="d-hist"><div class="empty"><span>📋</span>Sin transacciones</div></div></div>
+    <div class="card"><div class="ct"><span class="dot t"></span>Accesos rápidos</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn bp" onclick="go('libros')">➕ Registrar libro</button>
+        <button class="btn bt" onclick="go('usuarios')">➕ Registrar usuario</button>
+        <button class="btn bg2" onclick="go('prestamos')">⇄ Gestionar préstamo</button>
+        <button class="btn bgh" onclick="go('estructuras')">⬡ Ver estructuras de datos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIBROS -->
+<div id="page-libros" class="page">
+  <div class="ph"><div><h2>Catálogo de Libros</h2><p>MODEL: ListaEnlazadaLibros · REPO: LibroRepository · DB: tabla libros</p></div><span class="tag tag-m">Lista Enlazada</span></div>
+  <div class="grid g2" style="margin-bottom:12px">
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Registrar libro<span style="margin-left:auto" class="b bpu">POST /api/libros</span></div>
+      <div class="fr"><div class="fi"><label class="fl">ISBN</label><input id="l-isbn" placeholder="978-..."></div><div class="fi" style="max-width:80px"><label class="fl">Copias</label><input id="l-copias" type="number" value="1" min="1"></div></div>
+      <div class="fr"><div class="fi"><label class="fl">Título</label><input id="l-titulo" placeholder="Título del libro"></div></div>
+      <div class="fr"><div class="fi"><label class="fl">Autor</label><input id="l-autor" placeholder="Autor"></div><div class="fi" style="max-width:90px"><label class="fl">Año</label><input id="l-anio" type="number" placeholder="2024"></div></div>
+      <button class="btn bp" onclick="crearLibro()">➕ Agregar</button>
+    </div>
+    <div class="card">
+      <div class="ct"><span class="dot t"></span>Buscar<span style="margin-left:auto" class="b bok">GET /api/libros/buscar</span></div>
+      <div class="fr"><div class="fi"><label class="fl">Campo</label><select id="bq-c"><option value="titulo">Título</option><option value="autor">Autor</option><option value="isbn">ISBN</option></select></div></div>
+      <div style="display:flex;gap:7px;margin-bottom:8px"><input id="bq" placeholder="Término..."><button class="btn bt" onclick="buscarLibro()">🔍</button></div>
+      <div id="bq-res"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct"><span class="dot g"></span>Todos los libros<span style="margin-left:auto" class="b bpu">GET /api/libros</span></div>
+    <div class="tw"><table><thead><tr><th>ISBN</th><th>Título</th><th>Autor</th><th>Año</th><th>Stock</th><th>Estado</th><th></th></tr></thead><tbody id="tb-libros"></tbody></table></div>
+  </div>
+</div>
+
+<!-- USUARIOS -->
+<div id="page-usuarios" class="page">
+  <div class="ph"><div><h2>Usuarios</h2><p>MODEL: Arreglo · REPO: UsuarioRepository · DB: tabla usuarios</p></div><span class="tag tag-m">Arreglo</span></div>
+  <div class="grid g2" style="margin-bottom:12px">
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Registrar usuario<span style="margin-left:auto" class="b bpu">POST /api/usuarios</span></div>
+      <div class="fr"><div class="fi"><label class="fl">ID</label><input id="u-id" placeholder="U004"></div></div>
+      <div class="fr"><div class="fi"><label class="fl">Nombre completo</label><input id="u-nombre" placeholder="Nombre Apellido"></div></div>
+      <div class="fr"><div class="fi"><label class="fl">Correo</label><input id="u-correo" type="email" placeholder="usuario@email.com"></div></div>
+      <button class="btn bp" onclick="crearUsuario()">➕ Registrar</button>
+    </div>
+    <div class="card"><div class="ct"><span class="dot t"></span>Con préstamos activos</div><div id="u-activos"><div class="empty"><span>✅</span>Sin préstamos activos</div></div></div>
+  </div>
+  <div class="card">
+    <div class="ct"><span class="dot g"></span>Registro de usuarios<span style="margin-left:auto" class="b bok">GET /api/usuarios</span></div>
+    <div class="tw"><table><thead><tr><th>[i]</th><th>ID</th><th>Nombre</th><th>Correo</th><th>Registro</th></tr></thead><tbody id="tb-usuarios"></tbody></table></div>
+  </div>
+</div>
+
+<!-- PRÉSTAMOS -->
+<div id="page-prestamos" class="page">
+  <div class="ph"><div><h2>Préstamos y Devoluciones</h2><p>SERVICE: PrestamoService · REPO: PrestamoRepository · DB: tabla prestamos</p></div><span class="tag tag-c">Controller</span></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="ct"><span class="dot"></span>Registrar préstamo<span style="margin-left:auto" class="b bpu">POST /api/prestamos</span></div>
+      <div class="fr"><div class="fi"><label class="fl">Libro</label><select id="p-isbn"></select></div></div>
+      <div class="fr"><div class="fi"><label class="fl">Usuario</label><select id="p-uid"></select></div></div>
+      <button class="btn bp" style="margin-top:4px" onclick="prestar()">📤 Registrar préstamo</button>
+    </div>
+    <div class="card">
+      <div class="ct"><span class="dot t"></span>Registrar devolución<span style="margin-left:auto" class="b bok">PUT /api/prestamos/devolver</span></div>
+      <div class="fr"><div class="fi"><label class="fl">Préstamo activo</label><select id="d-key"></select></div></div>
+      <div style="height:8px"></div>
+      <button class="btn bt" onclick="devolver()">📥 Registrar devolución</button>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="ct"><span class="dot g"></span>Préstamos activos<span style="margin-left:auto" class="b bok">GET /api/prestamos</span></div>
+    <div class="tw"><table><thead><tr><th>ID</th><th>ISBN</th><th>Usuario</th><th>Fecha préstamo</th><th>Estado</th></tr></thead><tbody id="tb-prest"></tbody></table></div>
+  </div>
+</div>
+
+<!-- RESERVAS -->
+<div id="page-reservas" class="page">
+  <div class="ph"><div><h2>Cola de Reservas</h2><p>MODEL: ColaReservas FIFO · REPO: ReservaRepository · DB: tabla reservas</p></div><span class="tag tag-m">Cola FIFO</span></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="ct"><span class="dot p"></span>Nueva reserva<span style="margin-left:auto" class="b berr">POST /api/reservas</span></div>
+      <div class="fr"><div class="fi"><label class="fl">Libro (sin stock)</label><select id="r-isbn"></select></div></div>
+      <div class="fr"><div class="fi"><label class="fl">Usuario</label><select id="r-uid"></select></div></div>
+      <button class="btn bd" style="margin-top:4px" onclick="reservar()">◷ Agregar a cola</button>
+    </div>
+    <div class="card">
+      <div class="ct"><span class="dot t"></span>Cola por libro<span style="margin-left:auto" class="b bok">GET /api/reservas/{isbn}</span></div>
+      <div class="fr"><div class="fi"><label class="fl">Seleccionar libro</label><select id="rv-isbn" onchange="verCola()"></select></div></div>
+      <div id="cola-viz"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="ct"><span class="dot g"></span>Todas las reservas pendientes</div>
+    <div id="tb-reservas"><div class="empty"><span>◷</span>Sin reservas pendientes</div></div>
+  </div>
+</div>
+
+<!-- HISTORIAL -->
+<div id="page-historial" class="page">
+  <div class="ph"><div><h2>Historial</h2><p>MODEL: PilaHistorial LIFO · REPO: HistorialRepository · DB: tabla historial</p></div><span class="tag tag-m">Pila LIFO</span></div>
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct"><span class="dot"></span>Pila en memoria — CIMA → BASE<span style="margin-left:auto" class="b bpu">GET /api/historial</span></div>
+    <div class="sv" id="pila-viz"></div>
+  </div>
+  <div class="card">
+    <div class="ct"><span class="dot t"></span>Registro completo</div>
+    <div id="hist-list"><div class="empty"><span>📋</span>Sin transacciones</div></div>
+  </div>
+</div>
+
+<!-- ESTRUCTURAS -->
+<div id="page-estructuras" class="page">
+  <div class="ph"><div><h2>Estructuras en Memoria</h2><p>Estado actual de cada estructura de datos lineal</p></div></div>
+  <div class="grid g2">
+    <div class="card"><div class="ct"><span class="dot"></span>Lista enlazada — catálogo</div><p style="font-size:11px;color:var(--muted);margin-bottom:8px">HEAD → Nodo → Nodo → NULL</p><div class="sv" id="viz-lista"></div></div>
+    <div class="card"><div class="ct"><span class="dot g"></span>Arreglo — usuarios</div><p style="font-size:11px;color:var(--muted);margin-bottom:8px">[0] [1] [2] … acceso O(1)</p><div class="sv" id="viz-arr"></div></div>
+    <div class="card"><div class="ct"><span class="dot"></span>Pila LIFO — historial</div><p style="font-size:11px;color:var(--muted);margin-bottom:8px">CIMA → … → BASE, O(1)</p><div class="sv" id="viz-pila"></div></div>
+    <div class="card"><div class="ct"><span class="dot t"></span>Cola FIFO — reservas</div><p style="font-size:11px;color:var(--muted);margin-bottom:8px">FRENTE → … → FINAL, O(1)</p><div class="sv" id="viz-cola"></div></div>
+  </div>
+</div>
+
+</main>
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// API CLIENT — toda comunicación con el backend pasa por aquí
+// ═══════════════════════════════════════════════════════════
+const API = {
+  BASE: '/api',
+  async req(method, path, body = null) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(this.BASE + path, opts);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Error de red' }));
+      throw new Error(err.detail || 'Error desconocido');
+    }
+    return res.json();
+  },
+  get:    (p)       => API.req('GET',    p),
+  post:   (p, body) => API.req('POST',   p, body),
+  put:    (p, body) => API.req('PUT',    p, body),
+  delete: (p)       => API.req('DELETE', p),
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE — datos en memoria para las estructuras lineales
+// ═══════════════════════════════════════════════════════════
+let STATE = { libros: [], usuarios: [], prestamos: [], reservas: [], historial: [] };
+
+// ═══════════════════════════════════════════════════════════
+// ACCIONES — llaman a la API y actualizan la UI
+// ═══════════════════════════════════════════════════════════
+async function crearLibro() {
+  const isbn = v('l-isbn').trim(), titulo = v('l-titulo').trim(),
+        autor = v('l-autor').trim(), anio = v('l-anio').trim(),
+        copias = parseInt(v('l-copias')) || 1;
+  if (!isbn || !titulo || !autor) return toast('ISBN, título y autor son obligatorios', 'err');
+  try {
+    await API.post('/libros', { isbn, titulo, autor, anio, copias });
+    ['l-isbn','l-titulo','l-autor','l-anio'].forEach(id => g(id).value = '');
+    g('l-copias').value = '1';
+    await recargar(); toast(`"${titulo}" registrado exitosamente`, 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function buscarLibro() {
+  const q = v('bq').trim(), campo = v('bq-c');
+  if (!q) return;
+  try {
+    const res = await API.get(`/libros/buscar?q=${encodeURIComponent(q)}&campo=${campo}`);
+    const el = g('bq-res');
+    el.innerHTML = res.length
+      ? res.map(l => `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:11px"><strong>${l.titulo}</strong><br><span style="color:var(--muted)">${l.autor} · ${l.anio} · ${l.disponibles}/${l.copias} disp.</span></div>`).join('')
+      : '<p style="color:var(--muted);font-size:11px;margin-top:6px">Sin resultados</p>';
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function eliminarLibro(isbn) {
+  try {
+    await API.delete(`/libros/${encodeURIComponent(isbn)}`);
+    await recargar(); toast('Libro eliminado del catálogo', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function crearUsuario() {
+  const id = v('u-id').trim(), nombre = v('u-nombre').trim(), correo = v('u-correo').trim();
+  if (!id || !nombre) return toast('ID y nombre son obligatorios', 'err');
+  try {
+    await API.post('/usuarios', { id, nombre, correo });
+    ['u-id','u-nombre','u-correo'].forEach(i => g(i).value = '');
+    await recargar(); toast(`Usuario ${nombre} registrado`, 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function prestar() {
+  const isbn = v('p-isbn'), usuario_id = v('p-uid');
+  if (!isbn || !usuario_id) return toast('Selecciona libro y usuario', 'err');
+  try {
+    await API.post('/prestamos', { isbn, usuario_id });
+    await recargar(); toast('Préstamo registrado exitosamente', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function devolver() {
+  const key = v('d-key');
+  if (!key) return toast('Selecciona un préstamo activo', 'err');
+  const [isbn, usuario_id] = key.split('||');
+  try {
+    await API.put('/prestamos/devolver', { isbn, usuario_id });
+    await recargar(); toast('Devolución registrada exitosamente', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function reservar() {
+  const isbn = v('r-isbn'), usuario_id = v('r-uid');
+  if (!isbn || !usuario_id) return toast('Selecciona libro y usuario', 'err');
+  try {
+    await API.post('/reservas', { isbn, usuario_id });
+    await recargar(); toast('Reserva registrada en la cola', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function verCola() {
+  const isbn = v('rv-isbn');
+  const el = g('cola-viz');
+  if (!isbn) { el.innerHTML = ''; return; }
+  try {
+    const lista = await API.get(`/reservas/${encodeURIComponent(isbn)}`);
+    el.innerHTML = lista.length
+      ? lista.map((r,i) => `<div class="qi"><div class="qn">${i+1}</div><strong>${r.usuario_id}</strong><span style="margin-left:auto;color:var(--muted);font-size:10px;font-family:var(--mono)">${r.fecha||''}</span></div>`).join('')
+      : '<p style="color:var(--muted);font-size:11px;margin-top:6px">Sin reservas para este libro</p>';
+  } catch(e) { el.innerHTML = ''; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — actualiza la UI con los datos del STATE
+// ═══════════════════════════════════════════════════════════
+function renderAll() {
+  renderMetricas(); renderLibros(); renderUsuarios();
+  renderPrestamos(); renderReservas(); renderHistorial();
+  renderEstructuras(); populateSelects();
+}
+
+function renderMetricas() {
+  const { libros, usuarios, prestamos, historial, reservas } = STATE;
+  const disp = libros.reduce((s,l)=>s+l.disponibles,0);
+  const actU = new Set(prestamos.map(p=>p.usuario_id)).size;
+  g('sl').textContent  = libros.length;
+  g('su').textContent  = usuarios.length;
+  g('sp2').textContent = prestamos.length;
+  g('m-l').textContent = libros.length;
+  g('m-d').textContent = `${disp} disponibles`;
+  g('m-u').textContent = usuarios.length;
+  g('m-a').textContent = `${actU} con préstamos activos`;
+  g('m-p').textContent = prestamos.length;
+  g('m-r').textContent = `${reservas.length} en cola de espera`;
+  g('hcnt').textContent = historial.length;
+}
+
+function renderLibros() {
+  g('tb-libros').innerHTML = STATE.libros.length
+    ? STATE.libros.map(l => `<tr>
+        <td class="mc2">${l.isbn.slice(-8)}</td>
+        <td><strong>${l.titulo}</strong></td>
+        <td style="color:var(--muted)">${l.autor}</td>
+        <td class="mc2">${l.anio||'—'}</td>
+        <td>${l.disponibles===0?`<span class="b berr">Sin stock</span>`:`<span class="b bok">${l.disponibles}/${l.copias}</span>`}</td>
+        <td>${l.disponibles>0?`<span class="b bok">Disponible</span>`:`<span class="b berr">No disp.</span>`}</td>
+        <td><button class="btn bgh sm" onclick="eliminarLibro('${esc(l.isbn)}')">🗑</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" class="empty"><span>📚</span>Sin libros en el catálogo</td></tr>';
+}
+
+function renderUsuarios() {
+  const prestadosPor = {};
+  STATE.prestamos.forEach(p => { prestadosPor[p.usuario_id] = (prestadosPor[p.usuario_id]||0)+1; });
+  g('tb-usuarios').innerHTML = STATE.usuarios.length
+    ? STATE.usuarios.map((u,i) => `<tr>
+        <td class="mc2">[${i}]</td>
+        <td class="mc2">${u.id}</td>
+        <td><strong>${u.nombre}</strong></td>
+        <td style="color:var(--muted)">${u.correo||'—'}</td>
+        <td class="mc2">${u.created_at||'—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty"><span>👤</span>Sin usuarios</td></tr>';
+
+  const activos = STATE.usuarios.filter(u => prestadosPor[u.id]);
+  g('u-activos').innerHTML = activos.length
+    ? activos.map(u => `<div class="hi"><div class="hic pr">📖</div><div class="hm"><strong>${u.nombre}</strong><small>${prestadosPor[u.id]} libro(s) en préstamo · ${u.id}</small></div></div>`).join('')
+    : '<div class="empty"><span>✅</span>Ningún usuario con préstamos activos</div>';
+}
+
+function renderPrestamos() {
+  g('tb-prest').innerHTML = STATE.prestamos.length
+    ? STATE.prestamos.map(p => `<tr>
+        <td class="mc2">${p.id}</td>
+        <td class="mc2">${p.isbn.slice(-8)}</td>
+        <td>${p.usuario_id}</td>
+        <td class="mc2">${p.fecha_prestamo||'—'}</td>
+        <td><span class="b bwarn">Activo</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty"><span>⇄</span>Sin préstamos activos</td></tr>';
+}
+
+function renderReservas() {
+  const agrupadas = {};
+  STATE.reservas.forEach(r => { (agrupadas[r.isbn] = agrupadas[r.isbn]||[]).push(r); });
+  const entries = Object.entries(agrupadas);
+  g('tb-reservas').innerHTML = entries.length
+    ? entries.map(([isbn, lista]) => {
+        const libro = STATE.libros.find(l=>l.isbn===isbn);
+        return `<div style="margin-bottom:10px">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-family:var(--mono)">${libro?libro.titulo:isbn} — ${lista.length} en espera</div>
+          ${lista.map((r,i)=>`<div class="qi"><div class="qn">${i+1}</div><strong>${r.usuario_id}</strong><span style="margin-left:auto;color:var(--muted);font-size:10px;font-family:var(--mono)">${r.fecha||''}</span></div>`).join('')}
+        </div>`;
+      }).join('')
+    : '<div class="empty"><span>◷</span>Sin reservas pendientes</div>';
+}
+
+function renderHistorial() {
+  const items = STATE.historial;
+  // Visualización de pila (LIFO — los más recientes en la cima)
+  g('pila-viz').innerHTML = items.length
+    ? `<span style="color:var(--a3)">CIMA →</span> ${items.slice(0,7).map((t,i)=>`<span class="sn ${i===0?'tp':''}">${t.tipo==='PRÉSTAMO'?'📤':'📥'} ${(t.detalle||t.isbn).slice(0,14)}</span><span class="sa">→</span>`).join('')}${items.length>7?`<span class="nl">+${items.length-7}</span>`:`<span class="nl">BASE</span>`}`
+    : '<span style="color:var(--muted)">[ pila vacía ]</span>';
+
+  g('hist-list').innerHTML = items.length
+    ? items.map((t,i) => `<div class="hi">
+        <div class="hic ${t.tipo==='PRÉSTAMO'?'pr':'dv'}">${t.tipo==='PRÉSTAMO'?'📤':'📥'}</div>
+        <div class="hm"><strong>${t.tipo} — ${t.isbn}</strong><small>${t.detalle||''} · ${t.usuario_id}</small></div>
+        <div class="ht">${t.fecha||''}</div>
+        ${i===0?'<span class="b bpu" style="margin-left:6px">CIMA</span>':''}
+      </div>`).join('')
+    : '<div class="empty"><span>📋</span>La pila está vacía</div>';
+
+  // Dashboard
+  g('d-hist').innerHTML = items.slice(0,4).length
+    ? items.slice(0,4).map(t=>`<div class="hi"><div class="hic ${t.tipo==='PRÉSTAMO'?'pr':'dv'}">${t.tipo==='PRÉSTAMO'?'📤':'📥'}</div><div class="hm"><strong>${(t.isbn||'').slice(-10)}</strong><small>${t.tipo}·${t.usuario_id}</small></div><div class="ht">${t.fecha||''}</div></div>`).join('')
+    : '<div class="empty"><span>📋</span>Sin transacciones</div>';
+}
+
+function renderEstructuras() {
+  // Lista enlazada
+  g('viz-lista').innerHTML = STATE.libros.length
+    ? `<span style="color:var(--accent)">HEAD →</span> ${STATE.libros.map(l=>`<span class="sn" title="${l.titulo}">[${l.isbn.slice(-5)}]</span><span class="sa">→</span>`).join('')}<span class="nl">NULL</span>`
+    : '<span style="color:var(--muted)">HEAD → NULL</span>';
+  // Arreglo
+  g('viz-arr').innerHTML = STATE.usuarios.length
+    ? STATE.usuarios.map((u,i)=>`<span style="display:inline-block;text-align:center;margin:2px"><span style="font-size:9px;color:var(--muted);display:block">[${i}]</span><span class="sn" style="border-color:var(--a3);color:var(--a3)">${u.id}</span></span>`).join('')
+    : '<span style="color:var(--muted)">[ ]</span>';
+  // Pila
+  g('viz-pila').innerHTML = STATE.historial.length
+    ? `<span style="color:var(--a3)">CIMA →</span> ${STATE.historial.slice(0,5).map((t,i)=>`<span class="sn ${i===0?'tp':''}">${t.tipo==='PRÉSTAMO'?'📤':'📥'}</span><span class="sa">→</span>`).join('')}<span class="nl">BASE</span>`
+    : '<span style="color:var(--muted)">cima → NULL</span>';
+  // Cola
+  const agrupadas = {};
+  STATE.reservas.forEach(r => { (agrupadas[r.isbn]=agrupadas[r.isbn]||[]).push(r); });
+  const entries = Object.entries(agrupadas);
+  g('viz-cola').innerHTML = entries.length
+    ? entries.map(([isbn,lista])=>{
+        const t = (STATE.libros.find(l=>l.isbn===isbn)||{}).titulo||isbn;
+        return `<div style="margin-bottom:5px;font-size:10px"><span style="color:var(--muted)">${t.slice(0,16)}:</span> <span style="color:var(--a2)">FRENTE →</span> ${lista.map(r=>`<span class="sn fr2">${r.usuario_id}</span><span class="sa">→</span>`).join('')}<span class="nl">NULL</span></div>`;
+      }).join('')
+    : '<span style="color:var(--muted)">frente → NULL</span>';
+}
+
+function populateSelects() {
+  const librosDisp = STATE.libros.filter(l=>l.disponibles>0);
+  const librosND   = STATE.libros.filter(l=>l.disponibles===0);
+  sel('p-isbn',  librosDisp.map(l=>[l.isbn, `${l.titulo.slice(0,28)} (${l.disponibles} disp.)`]));
+  sel('p-uid',   STATE.usuarios.map(u=>[u.id, u.nombre]));
+  sel('d-key',   STATE.prestamos.map(p=>[`${p.isbn}||${p.usuario_id}`, `${p.isbn.slice(-8)} → ${p.usuario_id}`]));
+  sel('r-isbn',  librosND.map(l=>[l.isbn, l.titulo.slice(0,28)]));
+  sel('r-uid',   STATE.usuarios.map(u=>[u.id, u.nombre]));
+  sel('rv-isbn', STATE.libros.map(l=>[l.isbn, l.titulo.slice(0,28)]));
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATA LOADING — carga todos los datos desde la API
+// ═══════════════════════════════════════════════════════════
+async function recargar() {
+  try {
+    const [libros, usuarios, prestamos, reservas, historial] = await Promise.all([
+      API.get('/libros'),
+      API.get('/usuarios'),
+      API.get('/prestamos'),
+      API.get('/reservas'),
+      API.get('/historial?limit=50'),
+    ]);
+    STATE = { libros, usuarios, prestamos, reservas, historial };
+    renderAll();
+  } catch(e) {
+    toast('Error al cargar datos: ' + e.message, 'err');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION & UTILS
+// ═══════════════════════════════════════════════════════════
+function go(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  g('page-'+page).classList.add('on');
+  document.querySelectorAll('.nb').forEach(b => { if ((b.getAttribute('onclick')||'').includes("'"+page+"'")) b.classList.add('on'); });
+  if (page === 'reservas') verCola();
+}
+
+function g(id) { return document.getElementById(id); }
+function v(id) { const el = g(id); return el ? el.value : ''; }
+function esc(s) { return String(s).replace(/'/g, "\\'"); }
+function sel(id, opts) {
+  const el = g(id); if (!el) return;
+  const prev = el.value;
+  el.innerHTML = opts.length ? opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('') : '<option value="">— sin opciones —</option>';
+  if (prev && opts.find(([vv])=>vv===prev)) el.value = prev;
+}
+
+let _tt;
+function toast(msg, tipo='ok') {
+  const el = g('toast'); el.textContent = msg; el.className = tipo;
+  el.style.display = 'block'; clearTimeout(_tt);
+  _tt = setTimeout(() => el.style.display = 'none', 3800);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INICIO
+// ═══════════════════════════════════════════════════════════
+recargar();
+</script>
+</body>
+</html>
