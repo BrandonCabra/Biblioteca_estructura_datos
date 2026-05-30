@@ -35,7 +35,6 @@ gestion_biblioteca/
 ├── main_tkinter.py           # Vista/Controlador (Interfaz gráfica y ejecución)
 └── README.md                 # Documentación del proyecto
 
-
 ## 🛠️ Requisitos e Instalación
 Este proyecto fue desarrollado utilizando herramientas nativas de Python, por lo que no requiere la instalación de librerías externas de terceros.
 
